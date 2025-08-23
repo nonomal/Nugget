@@ -2,9 +2,31 @@ name: Build Nugget
 
 on:
   workflow_dispatch:
+    inputs:
+      build_for_macos_intel:
+        description: 'Build macOS intel'
+        required: false
+        default: true
+        type: boolean
+      build_for_macos_arm:
+        description: 'Build macOS arm'
+        required: false
+        default: true
+        type: boolean
+      build_for_windows:
+        description: 'Build Windows'
+        required: false
+        default: true
+        type: boolean
+      build_for_linux:
+        description: 'Build Linux'
+        required: false
+        default: true
+        type: boolean
 
 jobs:
   build-macos-intel:
+    if: ${{ github.event.inputs.build_for_macos_intel == 'true' }}
     runs-on: macos-13
     steps:
       - name: Checkout code
@@ -35,6 +57,7 @@ jobs:
           path: dist/Nugget_macOS_intel.zip
 
   build-macos-arm:
+    if: ${{ github.event.inputs.build_for_macos_arm == 'true' }}
     runs-on: macos-latest
     steps:
       - name: Checkout code
@@ -65,6 +88,7 @@ jobs:
           path: dist/Nugget_macOS_arm.zip
 
   build-windows:
+    if: ${{ github.event.inputs.build_for_windows == 'true' }}
     runs-on: windows-latest
     steps:
       - name: Checkout code
@@ -93,3 +117,34 @@ jobs:
         with:
           name: Nugget_Windows
           path: dist/Nugget_Windows.zip
+  
+  build_linux:
+    if: ${{ github.event.inputs.build_for_linux == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Build Linux
+        run: python compile.py
+
+      - name: Zip Nugget
+        run: |
+          cd dist
+          tar -cJf Nugget_Linux.tar.xz Nugget
+
+      - name: Upload TAR (Linux)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Nugget_Linux
+          path: dist/Nugget_Linux.tar.xz
